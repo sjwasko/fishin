@@ -2,6 +2,8 @@
 
 Terminal solunar, tide, and weather forecast — one command, full picture, btop-dense layout.
 
+![Day view panel for Sarasota, FL](docs/screenshots/day-panel.png)
+
 `fishin` rolls a solunar app, a tide app (xtides-style), and `wttr.in` into a single
 terminal panel. Solunar major/minor periods, sun/moon ephemera, NOAA tide
 predictions, open-meteo weather, and a per-day "best fishing window" cross-correlation
@@ -93,6 +95,24 @@ fishin --no-tides --no-weather  # astro-only, no network
 | `fishin --days N` | Legacy: render N full panels back-to-back |
 
 Skip network fetches with `--no-tides` / `--no-weather` (e.g. offline or for quick recompute).
+
+## Views
+
+### Day panel
+
+![](docs/screenshots/day-panel.png)
+
+### 7-day list
+
+![](docs/screenshots/list-7day.png)
+
+### Month grid
+
+![](docs/screenshots/month-grid.png)
+
+### Best 14 days, ranked
+
+![](docs/screenshots/best-14.png)
 
 ## Configuration
 
