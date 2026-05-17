@@ -9,19 +9,29 @@ all rendered in ~12 terminal lines per day.
 
 ## Install
 
+From PyPI (once published):
+
 ```bash
 pipx install fishin
 ```
 
-First run downloads the JPL DE421 ephemeris (~17 MB) into the working directory.
-NOAA + open-meteo responses are cached at `~/.cache/fishin/`.
+From a git checkout or this repo directly:
+
+```bash
+pipx install git+https://github.com/sjwasko/fishin.git
+```
+
+First run downloads the JPL DE421 ephemeris (~17 MB) into `~/.cache/fishin/ephemeris/`.
+NOAA + open-meteo + Nominatim responses are cached at `~/.cache/fishin/responses/`.
+
+Requires Python ≥ 3.11.
 
 ## Quick start
 
 ```bash
 fishin                          # full panel for today, default location
 fishin --city "sarasota fl"     # geocode and resolve nearest tide station
-fishin --save                   # write resolved location to ~/.config/fishin/config.toml
+fishin --city "..." --save      # write resolved location to ~/.config/fishin/config.toml
 fishin 7                        # compact 7-day list view
 fishin month                    # 30-day calendar grid with star ratings
 fishin best 14                  # next 14 days ranked, top 5 highlighted
@@ -53,10 +63,69 @@ station = "8726083"
 
 Resolution order: explicit flags > `--city` > config file > built-in Sarasota default.
 
-## Data sources
+Inland queries (>100 km from the nearest NOAA tide station) automatically
+drop the tide section — there are no ocean tides in Austin.
 
-- **Astronomy**: JPL DE421 ephemeris via [`skyfield`](https://rhodesmill.org/skyfield/)
-- **Tides**: NOAA CO-OPS predictions (`api.tidesandcurrents.noaa.gov`)
-- **Weather**: open-meteo (`api.open-meteo.com`, free, no key)
-- **Geocoding**: OpenStreetMap Nominatim
-- **Timezone**: `timezonefinder` (offline)
+## How the "Best" ranking works
+
+Every major/minor period is scored:
+
+| Factor | Weight |
+|---|---|
+| Major period base | +4 |
+| Minor period base | +2 |
+| Sunrise overlap (±1 hr) | +3 |
+| Sunset overlap (±1 hr) | +3 |
+| Each H/L tide overlap (±30 min) | +2 |
+| Calm wind (≤6 mph) | +1 |
+| Strong wind (≥18 mph) | −1 |
+| Rain ≥60% | −2 |
+
+Top two windows are shown — first in bright amber, second dimmed.
+
+## Credits & data sources
+
+`fishin` would not exist without the following free / open projects and public-data
+services. Please respect each provider's terms when running this tool at scale.
+
+### Runtime APIs
+
+| Source | Data | License / TOS |
+|---|---|---|
+| [NOAA CO-OPS](https://api.tidesandcurrents.noaa.gov/) | Tide predictions | US Government public domain |
+| [open-meteo](https://open-meteo.com/) | Weather forecasts | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) |
+| [OpenStreetMap Nominatim](https://nominatim.openstreetmap.org/) | Geocoding | [ODbL](https://opendatacommons.org/licenses/odbl/) · [usage policy](https://operations.osmfoundation.org/policies/nominatim/) |
+| [NASA JPL DE421](https://ssd.jpl.nasa.gov/planets/eph_export.html) | Planetary ephemeris | Public domain |
+
+The OSM Nominatim usage policy specifically asks clients to send a meaningful
+User-Agent and cache responses; both are honored — geocode results are cached
+on disk for 30 days.
+
+### Python dependencies
+
+| Package | Role | License |
+|---|---|---|
+| [skyfield](https://rhodesmill.org/skyfield/) | Astronomy / ephemeris | MIT |
+| [rich](https://github.com/Textualize/rich) | Terminal rendering | MIT |
+| [diskcache](https://github.com/grantjenks/python-diskcache) | Response cache | Apache 2.0 |
+| [timezonefinder](https://github.com/jannikmi/timezonefinder) | Lat/lon → IANA timezone | MIT |
+
+### Design inspiration
+
+The visual language and information density of `fishin` borrow shamelessly from:
+
+- [wttr.in](https://github.com/chubin/wttr.in) — terminal weather, the gold standard for "feels native to the shell"
+- [btop](https://github.com/aristocratos/btop) — pack-every-pixel monitoring panels
+- [xtides](https://flaterco.com/xtides/) — tide curve visualization and harmonic predictions
+- [F&H Solunar Time](https://fhstime.com/) — daily forecast layout, day-rating ring, calendar grid
+
+None of these projects are affiliated with `fishin`; we just learned from them.
+
+## License
+
+[MIT](LICENSE). Fork, improve, redistribute — just keep the copyright notice.
+
+## Architecture
+
+See [ARCHITECTURE.md](ARCHITECTURE.md) for the module layout, data flow, and
+extension points if you'd like to contribute.
