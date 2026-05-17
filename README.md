@@ -164,6 +164,11 @@ The visual language and information density of `fishin` borrow shamelessly from:
 
 None of these projects are affiliated with `fishin`; we just learned from them.
 
+## A note on the name
+
+Because that's how Karrie says it. The `g` got left somewhere in the
+South and we never went lookin' for it.
+
 ## License
 
 [MIT](LICENSE). Fork, improve, redistribute — just keep the copyright notice.
