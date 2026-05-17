@@ -8,7 +8,8 @@ version = "0.2.0"
 description = "Terminal solunar, tide, and weather forecast for the fishing / hunting day-planner crowd"
 readme = "README.md"
 requires-python = ">=3.11"
-license = "MIT"
+license = "Apache-2.0"
+license-files = ["LICENSE"]
 authors = [{ name = "Steve Wasko" }]
 keywords = ["solunar", "tide", "weather", "fishing", "terminal", "cli"]
 classifiers = [
