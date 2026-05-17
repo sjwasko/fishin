@@ -19,10 +19,31 @@ Or, for the bleeding-edge `main` branch:
 pipx install git+https://github.com/sjwasko/fishin.git
 ```
 
-Works on Linux, macOS, and Windows. Requires Python ≥ 3.11.
+Requires Python ≥ 3.11. Works on Linux, macOS, and Windows
+(see [Windows note](#windows) below).
 
 First run downloads the JPL DE421 ephemeris (~17 MB) into `~/.cache/fishin/ephemeris/`.
 NOAA, open-meteo, and Nominatim responses are cached at `~/.cache/fishin/responses/`.
+
+### Windows
+
+Requires **Windows 10 or later** and **Windows Terminal** — the classic
+PowerShell / `cmd.exe` consoles don't have the right Unicode glyphs for the
+tide-curve sparkline and won't render the amber palette correctly.
+
+Install Windows Terminal if you don't already have it (it ships by default on
+Windows 11):
+
+```powershell
+winget install --id Microsoft.WindowsTerminal -e
+```
+
+Then set it as the default terminal for all command-line apps:
+
+**Settings → System → Advanced → Terminal → Windows Terminal**
+
+After that, any new `fishin` invocation opens in Windows Terminal and the
+panel renders correctly.
 
 ## Quick start
 
