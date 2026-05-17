@@ -9,22 +9,20 @@ all rendered in ~12 terminal lines per day.
 
 ## Install
 
-From PyPI (once published):
-
 ```bash
 pipx install fishin
 ```
 
-From a git checkout or this repo directly:
+Or, for the bleeding-edge `main` branch:
 
 ```bash
 pipx install git+https://github.com/sjwasko/fishin.git
 ```
 
-First run downloads the JPL DE421 ephemeris (~17 MB) into `~/.cache/fishin/ephemeris/`.
-NOAA + open-meteo + Nominatim responses are cached at `~/.cache/fishin/responses/`.
+Works on Linux, macOS, and Windows. Requires Python ≥ 3.11.
 
-Requires Python ≥ 3.11.
+First run downloads the JPL DE421 ephemeris (~17 MB) into `~/.cache/fishin/ephemeris/`.
+NOAA, open-meteo, and Nominatim responses are cached at `~/.cache/fishin/responses/`.
 
 ## Quick start
 
