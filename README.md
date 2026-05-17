@@ -45,16 +45,42 @@ Then set it as the default terminal for all command-line apps:
 After that, any new `fishin` invocation opens in Windows Terminal and the
 panel renders correctly.
 
+## Set your location
+
+Out of the box, `fishin` uses Sarasota, FL as a fallback. To make it use your
+own location and have it **stick across runs**, geocode a place name once and
+save it as your default:
+
+```bash
+fishin --city "your town st" --save
+```
+
+From then on, plain `fishin` (no flags) uses your saved location. The resolved
+coordinates, timezone, and nearest NOAA tide station are written to
+`~/.config/fishin/config.toml`.
+
+`--city` without `--save` is a one-shot — useful for checking conditions
+somewhere you don't usually fish without overwriting your default:
+
+```bash
+fishin --city "key west fl"
+```
+
+Inland queries (>100 km from the nearest NOAA tide station) automatically
+drop the tide section — there are no ocean tides in Austin.
+
 ## Quick start
 
 ```bash
-fishin                          # full panel for today, default location
-fishin --city "sarasota fl"     # geocode and resolve nearest tide station
-fishin --city "..." --save      # write resolved location to ~/.config/fishin/config.toml
+fishin                          # full panel for today, your saved location
 fishin 7                        # compact 7-day list view
 fishin month                    # 30-day calendar grid with star ratings
 fishin best 14                  # next 14 days ranked, top 5 highlighted
+fishin --date 2026-06-15        # any specific date
+fishin --no-tides --no-weather  # astro-only, no network
 ```
+
+`fishin --help` lists every flag plus more examples.
 
 ## Modes
 
@@ -70,7 +96,8 @@ Skip network fetches with `--no-tides` / `--no-weather` (e.g. offline or for qui
 
 ## Configuration
 
-`~/.config/fishin/config.toml`:
+The easy path is `fishin --city "..." --save` (described above). If you'd
+rather hand-edit, the file lives at `~/.config/fishin/config.toml`:
 
 ```toml
 location = "Sarasota, FL"
@@ -80,10 +107,7 @@ tz = "America/New_York"
 station = "8726083"
 ```
 
-Resolution order: explicit flags > `--city` > config file > built-in Sarasota default.
-
-Inland queries (>100 km from the nearest NOAA tide station) automatically
-drop the tide section — there are no ocean tides in Austin.
+Resolution order: explicit flags > `--city` > config file > built-in default.
 
 ## How the "Best" ranking works
 

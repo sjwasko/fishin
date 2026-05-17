@@ -150,26 +150,51 @@ def _build_days(loc: dict, tz: ZoneInfo, targets: list[date],
     return days
 
 
+_EPILOG = """\
+Examples:
+  fishin --city "your town st" --save   set your default location once
+  fishin                                today, full panel, saved location
+  fishin --city "key west fl"           one-shot lookup, no save
+  fishin 7                              7-day compact list view
+  fishin month                          calendar grid, star-rated days
+  fishin best 14                        next 14 days ranked by score
+  fishin --date 2026-06-15              any specific date
+  fishin --no-tides --no-weather        astro-only, no network calls
+
+Config:
+  Resolved location lives in ~/.config/fishin/config.toml.
+  Resolution order: explicit flags > --city > config > built-in default.
+"""
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="fishin",
-        description="Terminal solunar / tide / weather forecast",
+        description="Terminal solunar / tide / weather forecast.",
+        epilog=_EPILOG,
+        formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     parser.add_argument("mode", nargs="*",
-                        help="N (list days) | 'month' | 'best [N]'")
-    parser.add_argument("--city", help="Place name to geocode")
-    parser.add_argument("--lat", type=float)
-    parser.add_argument("--lon", type=float)
-    parser.add_argument("--tz")
-    parser.add_argument("--location")
+                        help="N (list N days) | 'month' | 'best [N]'")
+    parser.add_argument("--city",
+                        help="Place name to geocode (e.g. 'sarasota fl'); "
+                             "one-shot unless paired with --save")
+    parser.add_argument("--lat", type=float, help="Latitude (decimal degrees)")
+    parser.add_argument("--lon", type=float, help="Longitude (decimal degrees)")
+    parser.add_argument("--tz", help="IANA timezone (e.g. 'America/Chicago')")
+    parser.add_argument("--location", help="Display name for the panel title")
     parser.add_argument("--station", help="NOAA CO-OPS tide station id")
-    parser.add_argument("--date", type=_parse_date, default=date.today())
+    parser.add_argument("--date", type=_parse_date, default=date.today(),
+                        help="Target date YYYY-MM-DD (default: today)")
     parser.add_argument("--days", type=int, default=1,
-                        help="Force N full panels (legacy)")
-    parser.add_argument("--no-tides", action="store_true")
-    parser.add_argument("--no-weather", action="store_true")
+                        help="Force N full panels back-to-back (legacy)")
+    parser.add_argument("--no-tides", action="store_true",
+                        help="Skip the NOAA tide fetch")
+    parser.add_argument("--no-weather", action="store_true",
+                        help="Skip the open-meteo weather fetch")
     parser.add_argument("--save", action="store_true",
-                        help=f"Persist resolved location to {config_path()}")
+                        help=f"Save the resolved location as your default "
+                             f"({config_path()})")
     args = parser.parse_args(argv)
 
     console = Console()
