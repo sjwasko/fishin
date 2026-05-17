@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "fishin"
-version = "0.2.0"
+version = "0.2.1"
 description = "Terminal solunar, tide, and weather forecast for the fishing / hunting day-planner crowd"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -32,6 +32,9 @@ dependencies = [
     "rich>=13",
     "diskcache>=5",
     "timezonefinder>=6",
+    # Windows has no system IANA tzdata; stdlib zoneinfo falls back to this
+    # PyPI package. Harmless on Linux/macOS where the system tzdata is used.
+    "tzdata>=2024.1",
 ]
 
 [project.scripts]
