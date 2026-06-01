@@ -66,12 +66,6 @@ def fetch_predictions_range(station: str, start_date: date, end_date: date,
     return events
 
 
-def fetch_predictions(station: str, target_date: date, tz: ZoneInfo,
-                      timeout: float = 10.0) -> list[dict]:
-    """Single-day shim around `fetch_predictions_range`."""
-    return fetch_predictions_range(station, target_date, target_date, tz, timeout)
-
-
 def _cache_key(station: str, d: date) -> str:
     return f"tide:{station}:{d.isoformat()}"
 
@@ -108,26 +102,6 @@ def get_tides_many(station: str, dates: list[date], tz: ZoneInfo,
             results[d] = evs
 
     return results
-
-
-def get_tide_day(station: str, target_date: date, tz: ZoneInfo,
-                 cache=None) -> tuple[list[dict], list[dict]]:
-    """Return (target_day_events, neighbor_context).
-
-    `neighbor_context` holds the prior day's last extremum and the next day's
-    first extremum so `tide_curve()` can anchor the start/end of the rendered
-    curve rather than extrapolating flat.
-    """
-    from datetime import timedelta as _td
-    prior = target_date - _td(days=1)
-    after = target_date + _td(days=1)
-    days = get_tides_many(station, [prior, target_date, after], tz, cache=cache)
-    context: list[dict] = []
-    if days.get(prior):
-        context.append(days[prior][-1])
-    if days.get(after):
-        context.append(days[after][0])
-    return days[target_date], context
 
 
 def tide_curve(events: list[dict], target_date: date, tz: ZoneInfo,

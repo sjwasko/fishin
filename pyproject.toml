@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "fishin"
-version = "0.2.2"
+version = "0.3.0"
 description = "Terminal solunar, tide, and weather forecast for the fishing / hunting day-planner crowd"
 readme = "README.md"
 requires-python = ">=3.11"
