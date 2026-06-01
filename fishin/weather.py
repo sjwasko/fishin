@@ -156,13 +156,6 @@ def _cache_key(lat: float, lon: float, d: date) -> str:
     return f"wx:{lat:.4f}:{lon:.4f}:{d.isoformat()}"
 
 
-def fetch_weather(lat: float, lon: float, target_date: date, tz: ZoneInfo,
-                  timeout: float = 10.0) -> dict:
-    """Single-day shim around the range fetcher."""
-    raw = fetch_weather_range(lat, lon, target_date, target_date, tz, timeout)
-    return _day_from_raw(raw, target_date, tz)
-
-
 def get_weather_many(lat: float, lon: float, dates: list[date],
                      tz: ZoneInfo, cache=None) -> dict[date, dict]:
     """Return {date: per_day_dict} for each requested date, using the cache.
