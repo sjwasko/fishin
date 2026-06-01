@@ -70,7 +70,8 @@ def nearest_station(lat: float, lon: float, refresh: bool = False) -> dict:
     stations = load_stations(refresh=refresh)
     if not stations:
         raise LookupError("no NOAA stations available")
-    best = min(stations, key=lambda s: haversine_km(lat, lon, s["lat"], s["lng"]))
-    best = dict(best)
-    best["distance_km"] = haversine_km(lat, lon, best["lat"], best["lng"])
-    return best
+    distance, _, best = min(
+        (haversine_km(lat, lon, s["lat"], s["lng"]), i, s)
+        for i, s in enumerate(stations)
+    )
+    return {**best, "distance_km": distance}
