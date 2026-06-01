@@ -1,9 +1,16 @@
 # `fishin` — Security & Optimization Audit
 
 **Audit scope:** entire `fishin/` Python package (11 modules, ~1,600 LOC) at
-baseline tag `pre-audit-baseline` (= release `v0.2.2`).
+baseline commit `482bcc8` — the current `main` HEAD, which is three
+README-only commits ahead of the `v0.2.2` release tag. No source code has
+changed between `v0.2.2` and the baseline; the findings here apply equally
+to both.
 **Audit branch:** `audit/security-hardening` — fixes implemented as atomic
 commits, version bumped to `0.3.0`.
+**Baseline anchor:** local tag `pre-audit-baseline` at `482bcc8`. The
+remote rejected the tag push (HTTP 403 — repo policy appears to permit
+branch pushes but not tag pushes), so the canonical rollback target is
+simply the `main` branch on remote, which this audit does not touch.
 **Auditor profile:** Principal Software Engineer + Senior Application Security
 Auditor.
 
@@ -488,8 +495,8 @@ if __name__ == "__main__":
 ## 4. What was implemented on the `audit/security-hardening` branch
 
 Each fix is its own atomic commit so any individual change is a single
-`git revert <sha>` away. The pre-audit state is anchored at the
-`pre-audit-baseline` tag (same commit as the `v0.2.2` release).
+`git revert <sha>` away. The pre-audit state is the `main` branch on
+remote (commit `482bcc8`), also tagged locally as `pre-audit-baseline`.
 
 ```
 56607c2 Bump version 0.2.2 → 0.3.0 for security-hardening release
@@ -539,8 +546,8 @@ venv, or `pipx install --force git+...@audit/security-hardening`):
 - **One fix misbehaves:** `git revert <sha>` on the audit branch, repush,
   retest. Each fix is independent.
 - **Whole branch bad:** ignore the branch entirely. The `main` line is
-  untouched. `pipx install git+...@main` (or `@v0.2.2`, or
-  `@pre-audit-baseline`) returns to the prior good state.
+  untouched. `pipx install git+https://github.com/sjwasko/fishin@main`
+  (or `@v0.2.2`) returns to the prior good state.
 - **Already merged and regretting it:** `git revert <merge-sha> -m 1` on
-  `main`, or hard-reset `main` to `pre-audit-baseline` if nothing else has
-  landed since the merge.
+  `main`, or hard-reset `main` back to commit `482bcc8` if nothing else
+  has landed since the merge.
