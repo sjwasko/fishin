@@ -511,33 +511,68 @@ cbc671d Remove unused single-day shim fetchers (dead code)
 
 ## 5. Smoke-test plan for the audit branch
 
-In a clean environment with deps installed (`pip install -e .` inside a
-venv, or `pipx install --force git+...@audit/security-hardening`):
+In a clean environment with deps installed, paste **one line at a time** —
+avoid combining commands with `&&` and avoid inline `# comments` on the
+same line as a command. zsh on macOS doesn't treat `#` as a comment in
+interactive mode, so an inline comment gets fed to the program as
+arguments (e.g. `fishin # 2nd run` parses as `fishin '#' '2nd' 'run'` →
+`unknown mode '#'`).
 
-1. **Version sanity:** `python -c "import fishin; print(fishin.__version__)"`
-   → `0.3.0`. Confirms the right branch is installed.
-2. **Cache write + read round-trip** (the headline fix):
-   ```bash
-   rm -rf ~/.cache/fishin/responses-v2/   # fresh start
-   fishin                                  # populates cache from network
-   fishin                                  # second run = cache READ —
-                                           # validates JSON+datetime codec
-   ```
-   Regression risk concentrates here. Both runs should render an identical
-   panel; any deserialization error means the codec needs a fix.
-3. **All view modes:** `fishin 7`, `fishin month`, `fishin best 14`,
-   `fishin --date 2026-06-15`. None should error.
-4. **Geocode + config write** (validates S-2 fix):
-   ```bash
-   fishin --city "key west fl" --save
-   cat ~/.config/fishin/config.toml      # must be valid TOML
-   fishin                                 # reads back without error
-   ```
-5. **Offline mode:** `fishin --no-tides --no-weather`. Pure astro path —
-   no network, exercises code paths unaffected by the cache change.
-6. **Legacy cache dormancy:** the old `~/.cache/fishin/responses/`
-   directory (if present from 0.2.x) should be ignored. Confirm new cache
-   files land under `responses-v2/` only.
+Install / upgrade — paste as a **single line**:
+```
+pipx install --force git+https://github.com/sjwasko/fishin@audit/security-hardening
+```
+
+Verify the right version is installed:
+```
+pipx list
+```
+Should show `fishin 0.3.0`.
+
+Clear the cache so the next two runs exercise WRITE then READ explicitly:
+```
+rm -rf ~/.cache/fishin/responses-v2/
+```
+
+Cache WRITE — populates the cache from network:
+```
+fishin
+```
+
+Cache READ — same invocation, must render an identical panel without
+errors. This is the highest-regression-risk step (validates the
+`FishinDisk` JSON+datetime codec round-trip):
+```
+fishin
+```
+
+All view modes:
+```
+fishin 7
+fishin month
+fishin best 14
+fishin --date 2026-06-15
+```
+
+Geocode + config write (validates the `_toml_escape` fix):
+```
+fishin --city "key west fl" --save
+cat ~/.config/fishin/config.toml
+```
+The config file must be valid TOML with the `location`/`lat`/`lon`/`tz`/
+`station` keys present. A subsequent plain `fishin` should pick it up.
+
+Offline mode — exercises code paths unaffected by the cache change:
+```
+fishin --no-tides --no-weather
+```
+
+Legacy cache dormancy — the old `~/.cache/fishin/responses/` directory
+(if present from 0.2.x) should be ignored. Confirm new cache files land
+under `responses-v2/` only:
+```
+ls ~/.cache/fishin/
+```
 
 ---
 
