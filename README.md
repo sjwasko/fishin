@@ -1,5 +1,8 @@
 # fishin
 
+[![Sponsor](https://img.shields.io/badge/Sponsor-%E2%9D%A4-db61a2?logo=githubsponsors&logoColor=white)](https://github.com/sponsors/sjwasko)
+[![Buy me a coffee](https://img.shields.io/badge/Buy%20me%20a%20coffee-ffdd00?logo=buymeacoffee&logoColor=black)](https://buymeacoffee.com/sutibu)
+
 Terminal solunar, tide, and weather forecast — one command, full picture, btop-dense layout.
 
 ![Day view panel for Sarasota, FL](docs/screenshots/day-panel.png)
