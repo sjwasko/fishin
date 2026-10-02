@@ -19,6 +19,14 @@ from zoneinfo import ZoneInfo
 
 OPENMETEO_URL = "https://api.open-meteo.com/v1/forecast"
 
+# open-meteo's free forecast endpoint only serves a sliding window of dates:
+# `forecast_days` tops out at 16 (today + 15) and `past_days` at 92. Asking for
+# any date outside it fails the *whole* request with HTTP 400, so we clamp to
+# the window and let out-of-range days go without weather.
+# https://open-meteo.com/en/docs
+FORECAST_DAYS = 16
+PAST_DAYS = 92
+
 # WMO weather code → (label, day glyph, night glyph).
 # Glyphs lean monochrome / text-style to stay close to wttr.in / btop tone.
 WEATHER_CODES: dict[int, tuple[str, str, str]] = {
@@ -66,14 +74,32 @@ def hpa_to_inhg(hpa: float) -> float:
     return hpa * 0.02953
 
 
+def forecast_window(tz: ZoneInfo, now: datetime | None = None) -> tuple[date, date]:
+    """First and last dates open-meteo will serve, inclusive.
+
+    "Today" differs between the target timezone and UTC near midnight, and we
+    don't know which one open-meteo anchors on, so take the narrower window.
+    """
+    now = now or datetime.now(ZoneInfo("UTC"))
+    local, utc = now.astimezone(tz).date(), now.astimezone(ZoneInfo("UTC")).date()
+    first = max(local, utc) - timedelta(days=PAST_DAYS)
+    last = min(local, utc) + timedelta(days=FORECAST_DAYS - 1)
+    return first, last
+
+
 def fetch_weather_range(lat: float, lon: float,
                         start_date: date, end_date: date, tz: ZoneInfo,
                         timeout: float = 10.0) -> dict:
-    """One open-meteo request for [start_date, end_date + 1] inclusive.
+    """One open-meteo request for [start_date, end_date + 1] inclusive,
+    clamped to the forecast window.
 
     The trailing +1 day ensures the last in-range day's midnight "Night"
-    sample (hour 0 of next day) is present.
+    sample (hour 0 of next day) is present. On the window's last day it isn't,
+    so that day comes back with Morn/Noon/Eve only.
     """
+    first, last = forecast_window(tz)
+    req_start = max(start_date, first)
+    req_end = min(end_date + timedelta(days=1), last)
     params = {
         "latitude": f"{lat}",
         "longitude": f"{lon}",
@@ -98,8 +124,8 @@ def fetch_weather_range(lat: float, lon: float,
             "precipitation_sum",
             "precipitation_probability_max",
         ]),
-        "start_date": start_date.isoformat(),
-        "end_date": (end_date + timedelta(days=1)).isoformat(),
+        "start_date": req_start.isoformat(),
+        "end_date": req_end.isoformat(),
     }
     url = f"{OPENMETEO_URL}?{urllib.parse.urlencode(params)}"
     with urllib.request.urlopen(url, timeout=timeout) as resp:
@@ -158,15 +184,21 @@ def _cache_key(lat: float, lon: float, d: date) -> str:
 
 def get_weather_many(lat: float, lon: float, dates: list[date],
                      tz: ZoneInfo, cache=None) -> dict[date, dict]:
-    """Return {date: per_day_dict} for each requested date, using the cache.
+    """Return {date: per_day_dict} for each requested date open-meteo covers,
+    using the cache.
 
-    Cache misses are coalesced into one open-meteo call, then split per-day."""
+    Dates outside `forecast_window` are left out of the result (not cached
+    as empty, so they pick up weather once they come into range). Cache
+    misses are coalesced into one open-meteo call, then split per-day."""
     from .cache import get_cache, weather_ttl
-    cache = cache or get_cache()
+    cache = cache if cache is not None else get_cache()
 
+    first, last = forecast_window(tz)
     results: dict[date, dict] = {}
     missing: list[date] = []
     for d in dates:
+        if not first <= d <= last:
+            continue
         hit = cache.get(_cache_key(lat, lon, d), default=None)
         if hit is not None:
             results[d] = hit

@@ -26,7 +26,7 @@ fishin/
 ├── cli.py          argparse, mode dispatch, location resolution, run_* glue
 ├── astro.py        skyfield-backed solunar math + window scoring
 ├── tides.py        NOAA CO-OPS fetcher, cosine curve, sparkline
-├── weather.py      open-meteo fetcher, WMO glyph table, wind arrows
+├── weather.py      open-meteo fetcher, forecast window, WMO glyphs, wind arrows
 ├── geocode.py      Nominatim + timezonefinder
 ├── stations.py     NOAA tide station catalog + nearest-lookup
 ├── cache.py        diskcache wrapper, TTL helpers
@@ -118,6 +118,14 @@ def get_X_many(args, dates, cache):
 
 A 14-day request hits each API exactly once. Subsequent runs are free.
 
+open-meteo only serves a sliding window (`weather.forecast_window`: today − 92
+through today + 15) and rejects the whole request with HTTP 400 if any date
+falls outside it. `get_weather_many` therefore skips out-of-window dates
+before coalescing (they are not cached, so they fill in once they come into
+range), and `fetch_weather_range` clamps its `end_date + 1` padding to the
+window's last day, which leaves that day without a midnight "Night" sample.
+`cli._print_weather_note` explains the gap under the output.
+
 ## Scoring model
 
 `astro.evaluate_windows(day)` ranks every major and minor period for the day.
@@ -187,6 +195,15 @@ def get_X_many(args, dates, tz, cache=None) -> dict[date, dict]:
 
 Anything that mirrors this contract will plug into the existing
 `_build_days` flow without renderer changes.
+
+## Tests
+
+```bash
+python -m venv .venv && .venv/bin/pip install -e '.[dev]'
+.venv/bin/pytest
+```
+
+Tests live in `tests/` and make no network calls (they stub `urlopen`).
 
 ## Distribution
 

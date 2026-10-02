@@ -99,6 +99,10 @@ fishin --no-tides --no-weather  # astro-only, no network
 
 Skip network fetches with `--no-tides` / `--no-weather` (e.g. offline or for quick recompute).
 
+Weather comes from open-meteo's free forecast, which covers today plus the next
+15 days (and about 3 months back). Days outside that window still get solunar
+and tides; a dim `weather forecast ends <date>` line notes where weather stops.
+
 ## Views
 
 ### Day panel

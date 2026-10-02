@@ -27,7 +27,7 @@ from rich.console import Console
 from .astro import build_day, evaluate_windows
 from .render import render_day, render_list, render_month, render_best
 from .tides import DEFAULT_STATION, get_tides_many, tide_curve
-from .weather import get_weather_many
+from .weather import forecast_window, get_weather_many
 from .config import load_config, save_config, config_path
 
 
@@ -150,6 +150,18 @@ def _build_days(loc: dict, tz: ZoneInfo, targets: list[date],
     return days
 
 
+def _print_weather_note(targets: list[date], tz: ZoneInfo, *,
+                        want_weather: bool, console: Console) -> None:
+    """Explain missing weather on days outside open-meteo's window."""
+    if not want_weather:
+        return
+    first, last = forecast_window(tz)
+    if targets[-1] > last:
+        console.print(f"[dim]weather forecast ends {last:%b} {last.day}[/dim]")
+    elif targets[0] < first:
+        console.print(f"[dim]weather history starts {first:%b} {first.day}[/dim]")
+
+
 _EPILOG = """\
 Examples:
   fishin --city "your town st" --save   set your default location once
@@ -261,6 +273,7 @@ def _run_panel(loc, tz, start_date, days, *,
     for i, day in enumerate(built):
         day["trend"] = trend_scores[i:i + 7]
         render_day(day, loc["location"], console=console)
+    _print_weather_note(targets, tz, want_weather=want_weather, console=console)
 
 
 def _run_list(loc, tz, start_date, days, *,
@@ -270,6 +283,7 @@ def _run_list(loc, tz, start_date, days, *,
                         want_tides=want_tides, want_weather=want_weather,
                         console=console)
     render_list(built, loc["location"], console=console)
+    _print_weather_note(targets, tz, want_weather=want_weather, console=console)
 
 
 def _run_month(loc, ref_date, *, console):
@@ -288,6 +302,7 @@ def _run_best(loc, tz, start_date, days, top, *,
                         want_tides=want_tides, want_weather=want_weather,
                         console=console)
     render_best(built, loc["location"], top_n=top, console=console)
+    _print_weather_note(targets, tz, want_weather=want_weather, console=console)
 
 
 def cli_main() -> None:

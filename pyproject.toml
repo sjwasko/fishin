@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "fishin"
-version = "0.3.0"
+version = "0.3.1"
 description = "Terminal solunar, tide, and weather forecast for the fishing / hunting day-planner crowd"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -37,6 +37,9 @@ dependencies = [
     "tzdata>=2024.1",
 ]
 
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+
 [project.scripts]
 fishin = "fishin.cli:cli_main"
 
@@ -45,3 +48,6 @@ packages = ["fishin"]
 
 [tool.hatch.build.targets.sdist]
 include = ["fishin", "README.md"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
