@@ -144,6 +144,10 @@ Resolution order: explicit flags > `--city` > config file > built-in default.
 is saved, so `--tz Typo/Zone --save` leaves your existing config untouched.
 If the file itself holds a bad zone, fix that line or override it with `--tz`.
 
+`lat` and `lon` get the same check: they must be numbers within ±90 and ±180.
+An out-of-range value stops `fishin` before anything is saved; one already in
+the config file can be fixed there or overridden with `--lat`/`--lon`.
+
 ## How the "Best" ranking works
 
 Every major/minor period is scored:
