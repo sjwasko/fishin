@@ -28,7 +28,7 @@ Requires Python ≥ 3.11. Works on Linux, macOS, and Windows
 (see [Windows note](#windows) below).
 
 First run downloads the JPL DE421 ephemeris (~17 MB) into `~/.cache/fishin/ephemeris/`.
-NOAA, open-meteo, and Nominatim responses are cached at `~/.cache/fishin/responses/`.
+NOAA, open-meteo, and Nominatim responses are cached at `~/.cache/fishin/responses-v2/`.
 
 ### Windows
 
@@ -97,6 +97,9 @@ fishin --no-tides --no-weather  # astro-only, no network
 | `fishin best N` | Next N days sorted by score, top 5 highlighted |
 | `fishin --days N` | Legacy: render N full panels back-to-back |
 
+`N` must be a whole number of at least 1; anything else (`fishin 0`,
+`fishin best abc`) exits with a short error message.
+
 Skip network fetches with `--no-tides` / `--no-weather` (e.g. offline or for quick recompute).
 
 Weather comes from open-meteo's free forecast, which covers today plus the next
@@ -135,6 +138,11 @@ station = "8726083"
 ```
 
 Resolution order: explicit flags > `--city` > config file > built-in default.
+
+`tz` must be an IANA zone name such as `America/Chicago`. An unknown zone
+(from `--tz` or the config file) stops `fishin` with an error before anything
+is saved, so `--tz Typo/Zone --save` leaves your existing config untouched.
+If the file itself holds a bad zone, fix that line or override it with `--tz`.
 
 ## How the "Best" ranking works
 
