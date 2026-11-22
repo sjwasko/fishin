@@ -59,3 +59,27 @@ def test_valid_modes_unchanged(tokens, expected):
 def test_unknown_mode_message_unchanged():
     with pytest.raises(SystemExit, match="unknown mode 'bogus'"):
         cli._parse_mode(["bogus"], 1)
+
+
+@pytest.mark.parametrize("argv", [
+    ["--lat", "200"], ["--lat", "-90.5"], ["--lon", "181"],
+    ["--lon", "-180.01"], ["--lat", "nan"], ["--lon", "inf"],
+])
+def test_bad_coords_are_rejected_and_not_saved(argv):
+    assert cli.main([*OFFLINE, *argv, "--save"]) == 1
+    assert not config_path().exists()
+
+
+@pytest.mark.parametrize("lat", [200.0, "abc", True])
+def test_bad_lat_already_in_config_returns_error(lat):
+    save_config({"location": "X", "lat": lat, "lon": -82.0,
+                 "tz": "America/New_York"})
+    assert cli.main(OFFLINE) == 1
+
+
+@pytest.mark.parametrize("loc", [
+    {"lat": 90.0, "lon": 180.0}, {"lat": -90.0, "lon": -180.0},
+    {"lat": 0, "lon": 0}, {"lat": 27.3633, "lon": -82.5197},
+])
+def test_boundary_and_normal_coords_pass(loc):
+    assert cli._bad_coord(loc) is None

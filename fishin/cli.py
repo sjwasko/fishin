@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import argparse
 import calendar
+import math
 from datetime import datetime, timedelta, date
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
@@ -43,6 +44,25 @@ BACKSTOP = {
 # their actual fishing conditions — inland lakes don't experience ocean tides.
 # `--city` resolution drops the station entirely in that case.
 INLAND_THRESHOLD_KM = 100.0
+
+
+_COORD_LIMITS = {"lat": 90.0, "lon": 180.0}
+
+
+def _bad_coord(loc: dict) -> tuple[str, str] | None:
+    """Return (key, message) for the first invalid lat/lon, else None.
+
+    Catches out-of-range values plus nan/inf, which argparse's type=float
+    accepts, and non-numbers from a hand-edited config.toml.
+    """
+    for key, limit in _COORD_LIMITS.items():
+        v = loc.get(key)
+        ok = (isinstance(v, (int, float)) and not isinstance(v, bool)
+              and math.isfinite(v) and -limit <= v <= limit)
+        if not ok:
+            return key, (f"{key} {v!r} is out of range — expected a "
+                         f"number from {-limit:g} to {limit:g}")
+    return None
 
 
 def _parse_date(s: str) -> date:
@@ -261,6 +281,16 @@ def main(argv: list[str] | None = None) -> int:
         if not args.tz:
             console.print(f"[dim]fix or remove the tz line in "
                           f"{config_path()}, or pass --tz[/dim]")
+        return 1
+    # Same rule for coordinates: an out-of-range --lat/--lon saved to
+    # config.toml doesn't crash later runs, it silently renders nonsense.
+    bad = _bad_coord(loc)
+    if bad:
+        key, msg = bad
+        console.print(f"[red]{msg}[/red]")
+        if getattr(args, key) is None:
+            console.print(f"[dim]fix the {key} line in {config_path()}, "
+                          f"or pass --{key}[/dim]")
         return 1
     mode = _parse_mode(args.mode, args.days)
 
