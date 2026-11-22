@@ -20,7 +20,7 @@ from __future__ import annotations
 import argparse
 import calendar
 from datetime import datetime, timedelta, date
-from zoneinfo import ZoneInfo
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from rich.console import Console
 
@@ -81,20 +81,37 @@ def _resolve_city(query: str, console: Console) -> dict:
     return result
 
 
+def _day_count(token: str, what: str) -> int:
+    """Parse a day count for `what`, rejecting non-integers and N < 1.
+
+    Every view indexes its first/last target day, so an empty range would
+    crash downstream — refuse it here with a readable message instead.
+    """
+    try:
+        n = int(token)
+    except ValueError as exc:
+        raise SystemExit(f"{what}: expected a whole number of days, "
+                         f"got {token!r}") from exc
+    if n < 1:
+        raise SystemExit(f"{what}: number of days must be at least 1, got {n}")
+    return n
+
+
 def _parse_mode(tokens: list[str], legacy_days: int) -> dict:
     if not tokens:
-        return {"type": "panel", "days": legacy_days}
+        return {"type": "panel",
+                "days": _day_count(str(legacy_days), "--days")}
     first = tokens[0].lower()
     if first == "month":
         return {"type": "month"}
     if first == "best":
-        n = int(tokens[1]) if len(tokens) > 1 else 14
+        n = _day_count(tokens[1], "best") if len(tokens) > 1 else 14
         return {"type": "best", "days": n, "top": 5}
     try:
-        n = int(first)
+        int(first)
     except ValueError as exc:
         raise SystemExit(f"unknown mode {first!r}") from exc
-    return {"type": "list", "days": n}
+    return {"type": "list", "days": _day_count(first, "list")}
 
 
 def _build_days(loc: dict, tz: ZoneInfo, targets: list[date],
@@ -234,12 +251,23 @@ def main(argv: list[str] | None = None) -> int:
         if v is not None:
             loc[key] = v
 
+    # Validate before saving: a bad zone written to config.toml would make
+    # every later run fail until the file was hand-edited.
+    try:
+        tz = ZoneInfo(loc["tz"])
+    except (ZoneInfoNotFoundError, ValueError):
+        console.print(f"[red]unknown timezone {loc['tz']!r} — use an IANA "
+                      f"name like 'America/Chicago'[/red]")
+        if not args.tz:
+            console.print(f"[dim]fix or remove the tz line in "
+                          f"{config_path()}, or pass --tz[/dim]")
+        return 1
+    mode = _parse_mode(args.mode, args.days)
+
     if args.save:
         path = save_config(loc)
         console.print(f"[dim]saved → {path}[/dim]")
 
-    tz = ZoneInfo(loc["tz"])
-    mode = _parse_mode(args.mode, args.days)
     want_tides = not args.no_tides
     want_weather = not args.no_weather
 
